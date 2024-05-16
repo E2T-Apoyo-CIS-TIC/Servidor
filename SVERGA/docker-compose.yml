@@ -1,6 +1,32 @@
 services:
   openjdk:
+    container_name: spring
     image: openjdk/personal
     build: ./openjdk
+    restart: always
+    networks:
+      - backend #spring solo puede hablar en la red interna, no muestra nada hacia afuera
+  proxy_inverso:
+    container_name: proxy
+    image: nginx:latest
+    volumes:
+      - ./nginx/reverse_proxy.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/localhost.pem:/etc/nginx/cert/localhost.pem
+      - ./nginx/localhost.key:/etc/nginx/cert/localhost.key
+    restart: always
+    networks:
+      - frontend  #en frontend publica sus puertos hacia afuera
+      - backend # a traves de backend puede hablar con spring
     ports:
-      - "8080:8080"
+      - "80:80"  
+      - "443:443"  
+    links:
+     - openjdk
+
+networks:
+  backend:
+    name: backend
+    internal: true
+  frontend:
+    name: frontend
+    driver: bridge
